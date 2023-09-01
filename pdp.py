@@ -14,6 +14,50 @@ class public_key:
 		self.n = n
 		self.g = g
 
+class file:
+	def __init__(self, message, tags, pk):
+		self.message = message
+		self.tags = tags
+		self.pk = pk
+
+class challenge:
+	def __init__(self, i, q_len, k1, k2):
+		self.i = i
+		self.q_len = q_len
+		self.k1 = k1
+		self.k2 = k2
+
+class proof:
+	def __init__(self, t, p):
+		self.t = t
+		self.p = p
+
+class client:
+	def __init__(self):
+		self.pk, self.sk = key_gen()
+	def new_file(self):
+		message = [randint(0, 2**128) for _ in range(randint(1, 10**3))]
+		tags = [tag_block(i, self.pk, self.sk) for i in message]
+		self.len = len(message)
+		return file(message, tags, self.pk)
+	def store_index(self, i):
+		self.i = i
+	def new_challenge(self):
+		return challenge(self.i, randint(1, self.len), randint(0, 2**1024), randint(0, 2**1024))
+	def verify(self, prf):
+		t, p = check_proof(prf.t, prf.p, self.pk, self.sk)
+		return t == p
+
+class server:
+	def __init__(self):
+		self.files = []
+	def add(self, file):
+		self.files.append(file)
+		return len(self.files)-1
+	def proof(self, chal):
+		t, p = gen_proof(self.files[chal.i].tags, self.files[chal.i].message, chal.q_len, chal.k1, chal.k2, self.files[chal.i].pk)
+		return proof(t, p)
+
 def obr(a, m):
 	return binpow(a, phi(m)-1, m)
 
@@ -26,8 +70,8 @@ def obr_mods(a, mods):
 	return binpow(a, phi_m-1, m)
 	
 def key_gen():
-	pp = 567930029861#500000003
-	qp = 618077191793#500000201
+	pp = 567930029861
+	qp = 618077191793
 	p = 2 * pp + 1
 	q = 2 * qp + 1
 	n = p*q
@@ -78,4 +122,19 @@ def main():
 	t, p = gen_proof(tags, message, q_len, k1, k2, pk)
 	print(check_proof(t, p, pk, sk))
 
+def test():
+	c = client()
+	s = server()
+	c.store_index(s.add(c.new_file()))
+	print(c.verify(s.proof(c.new_challenge())))
+
+def multi_test():
+	c = [client() for _ in range(10)]
+	s = server()
+	for i in range(len(c)):
+		c[i].store_index(s.add(c[i].new_file()))
+	for i in range(len(c)):
+		print(c[i].verify(s.proof(c[i].new_challenge())))
 main()
+#test()
+#multi_test()
