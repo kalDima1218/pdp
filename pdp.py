@@ -135,6 +135,7 @@ def multi_test():
 		c[i].store_index(s.add(c[i].new_file()))
 	for i in range(len(c)):
 		print(c[i].verify(s.proof(c[i].new_challenge())))
+
 main()
 #test()
 #multi_test()
