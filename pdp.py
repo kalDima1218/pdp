@@ -58,10 +58,10 @@ class server:
 		t, p = gen_proof(self.files[chal.i].tags, self.files[chal.i].message, chal.q_len, chal.k1, chal.k2, self.files[chal.i].pk)
 		return proof(t, p)
 
-def obr(a, m):
+def inv(a, m):
 	return binpow(a, phi(m)-1, m)
 
-def obr_mods(a, mods):
+def inv_mods(a, mods):
 	phi_m = 1
 	m = 1
 	for i in mods:
@@ -81,7 +81,7 @@ def key_gen():
 		a = randint(1, n)
 	g = (a ** 2) % n
 	e = 65537
-	d = obr_mods(e, [pp, qp])
+	d = inv_mods(e, [pp, qp])
 	pk = public_key(n, g)
 	sk = secret_key(e, d)
 	return pk, sk
